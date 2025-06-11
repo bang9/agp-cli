@@ -1,0 +1,67 @@
+{
+  "name": "agp-cli",
+  "version": "0.1.0",
+  "description": "Agentic Programming Project CLI - Standardized knowledge layer for AI-assisted development",
+  "main": "dist/index.js",
+  "bin": {
+    "agp": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli.ts",
+    "start": "node dist/cli.js",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "format": "prettier --write src/**/*.ts",
+    "format:check": "prettier --check src/**/*.ts",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "pnpm run clean && pnpm run build"
+  },
+  "keywords": [
+    "ai",
+    "agentic",
+    "programming",
+    "cli",
+    "knowledge",
+    "documentation",
+    "automation",
+    "development"
+  ],
+  "author": "bang9",
+  "license": "MIT",
+  "packageManager": "pnpm@10.11.0",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bang9/agp-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bang9/agp-cli/issues"
+  },
+  "homepage": "https://github.com/bang9/agp-cli#readme",
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/inquirer": "^9.0.8",
+    "@types/node": "^24.0.0",
+    "@types/yauzl": "^2.10.3",
+    "prettier": "^3.5.3",
+    "tsx": "^4.20.1",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.3"
+  },
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "commander": "^14.0.0",
+    "fs-extra": "^11.3.0",
+    "inquirer": "^12.6.3",
+    "node-fetch": "^3.3.2",
+    "yauzl": "^3.2.0"
+  }
+}

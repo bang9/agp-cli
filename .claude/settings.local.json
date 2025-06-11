@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(mkdir:*)",
+      "Bash(mv:*)",
+      "Bash(rmdir:*)",
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(pnpm:*)",
+      "Bash(rm:*)",
+      "Bash(git submodule:*)",
+      "Bash(cat:*)",
+      "Bash(./dist/cli.js init:*)",
+      "Bash(node:*)"
+    ],
+    "deny": []
+  }
+}
