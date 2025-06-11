@@ -29,7 +29,18 @@ export async function initializeAgpDirectory(options: AgpInitOptions): Promise<v
 
   // Check if .agp already exists
   if (await fs.pathExists(agpPath) && !options.force) {
-    throw new Error('AGP directory already exists. Use --force to overwrite.');
+    // Check if .agp directory is empty (cloned project case)
+    const agpContents = await fs.readdir(agpPath);
+    const nonHiddenFiles = agpContents.filter(file => !file.startsWith('.'));
+    
+    if (nonHiddenFiles.length === 0) {
+      logger.info('Empty .agp directory detected. Pulling submodule content...');
+      await pullSubmoduleContent(cwd);
+      logger.success('Submodule content pulled successfully!');
+      return;
+    } else {
+      throw new Error('AGP directory already exists. Use --force to overwrite.');
+    }
   }
 
   // Check if we're in a git repository
@@ -438,6 +449,28 @@ async function mergeTemplateWithExisting(agpPath: string, templateUrl: string): 
     // Clean up on error
     await fs.remove(tempDir);
     throw error;
+  }
+}
+
+async function pullSubmoduleContent(cwd: string): Promise<void> {
+  const { execSync } = await import('child_process');
+  
+  try {
+    // Initialize and update submodules
+    logger.progress('Initializing submodule');
+    execSync('git submodule init', { cwd, stdio: 'pipe' });
+    logger.progressDone('Submodule initialized');
+    
+    logger.progress('Pulling submodule content');
+    execSync('git submodule update --remote', { cwd, stdio: 'pipe' });
+    logger.progressDone('Submodule content pulled');
+    
+    // Validate the setup
+    const agpPath = path.join(cwd, '.agp');
+    await validateAgpSetup(agpPath);
+    
+  } catch (error) {
+    throw new Error(`Failed to pull submodule content: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
