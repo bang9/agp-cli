@@ -1,6 +1,6 @@
 import { Command } from 'commander';
-import chalk from 'chalk';
 import { connectToAiTool } from '../utils/agp-connect';
+import { logger } from '../utils/logger';
 
 export const connectCommand = new Command('connect')
   .description('Configure AGP for specific AI tools')
@@ -14,17 +14,17 @@ export const connectCommand = new Command('connect')
         throw new Error(`Unsupported tool: ${tool}. Supported tools: ${supportedTools.join(', ')}`);
       }
       
-      console.log(chalk.blue(`🔧 Configuring AGP for ${tool}...`));
+      logger.info(`Configuring AGP for ${tool}...`);
       
       await connectToAiTool({
         tool: tool.toLowerCase(),
         configPath: options.config,
       });
       
-      console.log(chalk.green(`✅ AGP configured for ${tool} successfully!`));
+      logger.success(`AGP configured for ${tool} successfully!`);
     } catch (error) {
-      console.error(chalk.red('❌ Failed to configure AGP:'));
-      console.error(chalk.red(error instanceof Error ? error.message : 'Unknown error'));
+      logger.error('Failed to configure AGP:');
+      logger.error(error instanceof Error ? error.message : 'Unknown error');
       process.exit(1);
     }
   });

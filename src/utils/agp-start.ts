@@ -142,9 +142,9 @@ async function showSessionOverview(sessionFilePath: string): Promise<void> {
         .filter(task => task.length > 0);
 
       if (tasks.length > 0) {
-        console.log('\n📋 Current Tasks:');
+        logger.info('Current Tasks:');
         tasks.forEach(task => {
-          console.log(`  • ${task}`);
+          logger.step(task);
         });
       }
     }
@@ -159,15 +159,14 @@ async function showSessionOverview(sessionFilePath: string): Promise<void> {
         .filter(file => file.length > 0);
 
       if (files.length > 0) {
-        console.log('\n📁 Active Files:');
+        logger.info('Active Files:');
         files.forEach(file => {
-          console.log(`  • ${file}`);
+          logger.step(file);
         });
       }
     }
 
-    console.log('\n💡 You can now start working! AI will automatically track your progress.');
-    console.log('');
+    logger.info('You can now start working! AI will automatically track your progress.');
     
   } catch (error) {
     // Don't throw, just skip the overview

@@ -133,7 +133,7 @@ async function initializeSubmodule(agpPath: string, existingUrl?: string, templa
   
   process.on('SIGINT', () => {
     cleanup();
-    console.log('\n\n❌ Operation cancelled by user');
+    logger.warning('Operation cancelled by user');
     process.exit(0);
   });
 
@@ -148,10 +148,10 @@ async function initializeSubmodule(agpPath: string, existingUrl?: string, templa
     logger.info(`Using existing repository URL: ${existingUrl}`);
   } else {
     logger.info('AGP requires a remote repository for the .agp submodule.');
-    console.log(chalk.gray('\nPlease create an empty repository and provide the URL:'));
-    console.log(chalk.gray('Examples:'));
-    console.log(chalk.gray('  - git@github.com:username/my-project-agp.git'));
-    console.log(chalk.gray('  - https://github.com/username/my-project-agp.git'));
+    logger.info('Please create an empty repository and provide the URL:');
+    logger.info('Examples:');
+    logger.step('git@github.com:username/my-project-agp.git');
+    logger.step('https://github.com/username/my-project-agp.git');
   }
 
   while (!success && retryCount < maxRetries) {
@@ -294,11 +294,10 @@ async function initializeSubmodule(agpPath: string, existingUrl?: string, templa
       
       logger.error(`Failed to connect to repository (attempt ${retryCount}/${maxRetries})`);
       logger.warning('Please check:');
-      console.log(chalk.gray('  - Repository exists and is empty'));
-      console.log(chalk.gray('  - You have push permissions'));
-      console.log(chalk.gray('  - URL format is correct'));
-      console.log(chalk.gray('  - Repository is accessible'));
-      console.log('');
+      logger.step('Repository exists and is empty');
+      logger.step('You have push permissions');
+      logger.step('URL format is correct');
+      logger.step('Repository is accessible');
       
       // Reset repository URL for retry if we haven't exceeded max retries
       if (retryCount < maxRetries) {
