@@ -238,6 +238,8 @@ async function initializeSubmodule(agpPath: string, existingUrl?: string, templa
         }
 
         process.chdir(cwd); // Return to original directory
+        success = true;
+        return repositoryUrl;
       }
 
       // Return to parent directory
