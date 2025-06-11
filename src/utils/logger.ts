@@ -126,9 +126,12 @@ class Logger {
 
     this.clearProgress();
 
+    // Initial display
+    process.stdout.write(`${chalk.gray(spinnerChars[0])} ${chalk.gray(message)}...`);
+    
     const spinnerInterval = setInterval(() => {
-      process.stdout.write(`\r${chalk.gray(spinnerChars[spinnerIndex])} ${chalk.gray(message)}...`);
       spinnerIndex = (spinnerIndex + 1) % spinnerChars.length;
+      process.stdout.write(`\r${chalk.gray(spinnerChars[spinnerIndex])} ${chalk.gray(message)}...`);
     }, 100);
 
     try {

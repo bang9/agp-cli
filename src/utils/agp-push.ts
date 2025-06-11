@@ -2,12 +2,11 @@ import { execSync } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs-extra';
 import { AgpPushOptions } from '../types';
-import { Logger } from './logger';
+import { logger } from './logger';
 
 export async function pushAgpChanges(options: AgpPushOptions): Promise<void> {
   const cwd = process.cwd();
   const agpPath = path.join(cwd, '.agp');
-  const logger = new Logger();
 
   // Check if .agp directory exists
   if (!(await fs.pathExists(agpPath))) {
