@@ -56,44 +56,47 @@ export async function initializeAgpDirectory(options: AgpInitOptions): Promise<v
     }
   }
 
-  // Setup AGP structure silently
+  // Setup AGP structure  
   const templateUrl = options.templateUrl || DEFAULT_TEMPLATE_URL;
-  const detectedProjectInfo = await detectProjectType(cwd);
+  let detectedProjectInfo;
   
-  // Remove existing .agp if force is enabled
-  if (await fs.pathExists(agpPath)) {
-    await fs.remove(agpPath);
-  }
-  
-  // Download template
-  await downloadTemplate(templateUrl, agpPath);
-  
-  // Ensure project directory exists
-  const projectPath = path.join(agpPath, 'project');
-  await fs.ensureDir(projectPath);
-  
-  // Analyze project and generate documentation
-  await analyzeProject(cwd, detectedProjectInfo);
-  
-  // projectInfo used for future reference
+  await logger.withSpinner('Setting up AGP structure', async () => {
+    detectedProjectInfo = await detectProjectType(cwd);
+    
+    // Remove existing .agp if force is enabled
+    if (await fs.pathExists(agpPath)) {
+      await fs.remove(agpPath);
+    }
+    
+    // Download template
+    await downloadTemplate(templateUrl, agpPath);
+    
+    // Ensure project directory exists
+    const projectPath = path.join(agpPath, 'project');
+    await fs.ensureDir(projectPath);
+    
+    // Analyze project and generate documentation
+    await analyzeProject(cwd, detectedProjectInfo);
+    
+    // Create additional required directories and files
+    await setupAdditionalStructure(agpPath);
+  });
 
-  // Create additional required directories and files
-  await setupAdditionalStructure(agpPath);
-
-  // Initialize git submodule (this has its own user interaction but should be silent too)
+  // Initialize git submodule (has user interaction - outside spinner)
   const submoduleUrl = await initializeSubmodule(
     agpPath,
     existingConfig?.submodule?.repository || undefined,
     templateUrl,
   );
 
-  // Create or restore config file
-  await createConfigFile(agpPath, existingConfig, submoduleUrl);
-  
-  // Validation step
-  await validateAgpSetup(agpPath);
-
-  // No output needed - spinner will show completion
+  // Finalize setup
+  await logger.withSpinner('Finalizing setup', async () => {
+    // Create or restore config file
+    await createConfigFile(agpPath, existingConfig, submoduleUrl);
+    
+    // Validation step
+    await validateAgpSetup(agpPath);
+  });
 }
 
 async function initializeSubmodule(agpPath: string, existingUrl?: string, templateUrl?: string): Promise<string> {
