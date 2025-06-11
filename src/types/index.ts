@@ -3,8 +3,8 @@ export interface AgpInitOptions {
   templateUrl?: string;
 }
 
-export interface AgpSyncOptions {
-  message: string;
+export interface AgpPushOptions {
+  message?: string;
 }
 
 export interface AgpLinkOptions {

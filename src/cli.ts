@@ -4,7 +4,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import { initCommand } from './commands/init';
 import { createStartCommand } from './commands/start';
-import { syncCommand } from './commands/sync';
+import { pushCommand } from './commands/push';
 import { linkCommand } from './commands/link';
 import { connectCommand } from './commands/connect';
 
@@ -18,7 +18,7 @@ program
 // Register commands
 program.addCommand(initCommand);
 program.addCommand(createStartCommand());
-program.addCommand(syncCommand);
+program.addCommand(pushCommand);
 program.addCommand(linkCommand);
 program.addCommand(connectCommand);
 

@@ -29,23 +29,55 @@ export async function connectToAiTool(options: AgpConnectOptions): Promise<void>
   }
 }
 
-async function setupClaudeConfig(configPath: string): Promise<void> {
-  const claudeConfig = {
-    instructions: 'Read .agp/instructions.md for AGP system rules and workflows.',
-    contextFiles: [
-      '.agp/instructions.md',
-      '.agp/architecture/overview.md',
-      '.agp/patterns/overview.md',
-    ],
-    rules: [
-      'Always read AGP knowledge files before starting work',
-      'Update AGP documentation after making changes',
-      'Follow the standardized knowledge file format',
-    ],
-  };
+async function setupClaudeConfig(_configPath: string): Promise<void> {
+  const cwd = process.cwd();
+  const claudeMdPath = path.join(cwd, 'CLAUDE.md');
+  const agpInstructionsPath = path.join(cwd, '.agp', 'instructions.md');
+  
+  // Read current CLAUDE.md if it exists
+  let existingContent = '';
+  if (await fs.pathExists(claudeMdPath)) {
+    existingContent = await fs.readFile(claudeMdPath, 'utf-8');
+  }
+  
+  // Read full AGP instructions
+  let agpInstructions = '';
+  if (await fs.pathExists(agpInstructionsPath)) {
+    agpInstructions = await fs.readFile(agpInstructionsPath, 'utf-8');
+  } else {
+    throw new Error('AGP instructions.md not found. Run "agp init" first.');
+  }
+  
+  // Create AGP integration section with full instructions
+  const agpIntegrationPrompt = `
+## MANDATORY: AGP System Integration
 
-  const claudeConfigPath = path.join(configPath, 'claude.json');
-  await fs.writeJson(claudeConfigPath, claudeConfig, { spaces: 2 });
+**Claude Code MUST follow the complete AGP workflow system below:**
+
+${agpInstructions}
+
+---
+*Complete AGP instructions auto-included by \`agp connect claude\`*
+`;
+
+  // Replace any existing AGP section or append
+  let updatedContent;
+  if (existingContent.includes('## MANDATORY:')) {
+    // Replace existing AGP section
+    updatedContent = existingContent.replace(
+      /## MANDATORY:[\s\S]*?(?=##[^#]|$)/g,
+      agpIntegrationPrompt
+    );
+  } else {
+    // Append to existing content
+    updatedContent = existingContent + '\n' + agpIntegrationPrompt;
+  }
+  
+  // Write updated CLAUDE.md
+  await fs.writeFile(claudeMdPath, updatedContent.trim());
+  
+  console.log('\n📋 Updated CLAUDE.md with complete AGP instructions');
+  console.log('🎯 Claude Code will now follow the full AGP workflow system');
 }
 
 async function setupCursorConfig(configPath: string): Promise<void> {

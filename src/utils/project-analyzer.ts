@@ -1,45 +1,69 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { ProjectInfo } from '../types';
-import chalk from 'chalk';
+import { Logger } from './logger';
 
 interface SourceFile {
   path: string;
   relativePath: string;
-  type: 'component' | 'hook' | 'util' | 'api' | 'page' | 'test' | 'config' | 'other';
-  language: 'typescript' | 'javascript' | 'jsx' | 'tsx' | 'json' | 'other';
+  type: 'source' | 'test' | 'config' | 'docs' | 'build' | 'other';
+  language: string;
 }
 
 export async function analyzeProject(projectPath: string, projectInfo: ProjectInfo): Promise<void> {
   const agpPath = path.join(projectPath, '.agp');
+  const logger = new Logger();
   
-  console.log(chalk.gray('🔍 Analyzing source files...'));
+  logger.info('🔍 Analyzing source files...');
   
   // Find all source files
   const sourceFiles = await findSourceFiles(projectPath);
-  console.log(chalk.gray(`📄 Found ${sourceFiles.length} source files`));
+  logger.info(`📄 Found ${sourceFiles.length} source files`);
   
   // Generate architecture documentation
-  await generateArchitectureFiles(agpPath, projectInfo, sourceFiles);
+  await generateArchitectureFiles(agpPath, projectInfo, sourceFiles, logger);
   
   // Generate pattern documentation
-  await generatePatternFiles(agpPath, projectInfo, sourceFiles);
+  await generatePatternFiles(agpPath, projectInfo, sourceFiles, logger);
   
   // Generate initial knowledge files for existing source files
-  console.log(chalk.gray('📝 Generating initial knowledge files...'));
+  logger.info('📝 Generating initial knowledge files...');
   for (const file of sourceFiles.slice(0, 10)) { // Limit to first 10 files for demo
     await generateSourceFileKnowledge(agpPath, file);
   }
   
   if (sourceFiles.length > 10) {
-    console.log(chalk.gray(`   ... and ${sourceFiles.length - 10} more files (knowledge files can be generated as needed)`));
+    logger.info(`   ... and ${sourceFiles.length - 10} more files (knowledge files can be generated as needed)`);
   }
 }
 
 async function findSourceFiles(projectPath: string): Promise<SourceFile[]> {
   const sourceFiles: SourceFile[] = [];
-  const extensions = ['.ts', '.tsx', '.js', '.jsx', '.vue', '.py', '.go', '.rs'];
-  const excludeDirs = ['node_modules', 'dist', 'build', '.git', '.agp', 'coverage'];
+  const extensions = [
+    // JavaScript/TypeScript
+    '.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs',
+    // Web
+    '.vue', '.svelte', '.html', '.css', '.scss', '.sass', '.less',
+    // Backend languages
+    '.py', '.go', '.rs', '.java', '.kt', '.scala', '.rb', '.php', '.cs', '.fs', '.vb',
+    // Systems programming
+    '.c', '.cpp', '.cc', '.cxx', '.h', '.hpp', '.hxx',
+    // Functional
+    '.hs', '.elm', '.clj', '.cljs', '.ml', '.mli',
+    // Data/Config
+    '.sql', '.json', '.yaml', '.yml', '.toml', '.xml',
+    // Mobile
+    '.swift', '.dart', '.m', '.mm',
+    // Shell/Scripts
+    '.sh', '.bash', '.zsh', '.ps1', '.py', '.pl',
+    // Other
+    '.r', '.jl', '.nim', '.zig', '.odin'
+  ];
+  const excludeDirs = [
+    'node_modules', 'dist', 'build', '.git', '.agp', 'coverage',
+    'target', 'bin', 'obj', '__pycache__', '.venv', 'venv',
+    'vendor', '.idea', '.vscode', 'tmp', 'temp'
+  ];
   
   async function scanDirectory(dirPath: string): Promise<void> {
     try {
@@ -76,30 +100,66 @@ async function findSourceFiles(projectPath: string): Promise<SourceFile[]> {
 function determineFileType(filePath: string): SourceFile['type'] {
   const segments = filePath.toLowerCase().split('/');
   const fileName = path.basename(filePath, path.extname(filePath)).toLowerCase();
+  const ext = path.extname(filePath).toLowerCase();
   
-  if (segments.includes('components') || segments.includes('component')) return 'component';
-  if (segments.includes('hooks') || segments.includes('hook') || fileName.startsWith('use')) return 'hook';
-  if (segments.includes('utils') || segments.includes('utilities') || segments.includes('lib')) return 'util';
-  if (segments.includes('api') || segments.includes('services')) return 'api';
-  if (segments.includes('pages') || segments.includes('views') || segments.includes('screens')) return 'page';
-  if (fileName.includes('test') || fileName.includes('spec') || segments.includes('__tests__')) return 'test';
-  if (fileName.includes('config') || fileName === 'index') return 'config';
+  // Test files
+  if (fileName.includes('test') || fileName.includes('spec') || 
+      segments.includes('__tests__') || segments.includes('tests') ||
+      segments.includes('test') || segments.includes('spec')) return 'test';
+      
+  // Config files  
+  if (fileName.includes('config') || fileName === 'index' ||
+      ['.json', '.yaml', '.yml', '.toml', '.xml'].includes(ext) ||
+      segments.includes('config') || segments.includes('configuration')) return 'config';
+      
+  // Documentation
+  if (['.md', '.rst', '.txt'].includes(ext) || 
+      segments.includes('docs') || segments.includes('doc') ||
+      segments.includes('documentation')) return 'docs';
+      
+  // Build/deployment related
+  if (segments.includes('build') || segments.includes('scripts') ||
+      segments.includes('deploy') || segments.includes('ci') ||
+      fileName.includes('docker') || fileName.includes('make')) return 'build';
   
-  return 'other';
+  // Everything else is source code
+  return 'source';
 }
 
-function determineLanguage(extension: string): SourceFile['language'] {
-  switch (extension) {
-    case '.ts': return 'typescript';
-    case '.tsx': return 'tsx';
-    case '.js': return 'javascript';
-    case '.jsx': return 'jsx';
-    case '.json': return 'json';
-    default: return 'other';
-  }
+function determineLanguage(extension: string): string {
+  const langMap: Record<string, string> = {
+    // JavaScript/TypeScript
+    '.ts': 'typescript', '.tsx': 'typescript', '.js': 'javascript', 
+    '.jsx': 'javascript', '.mjs': 'javascript', '.cjs': 'javascript',
+    // Web
+    '.vue': 'vue', '.svelte': 'svelte', '.html': 'html', 
+    '.css': 'css', '.scss': 'scss', '.sass': 'sass', '.less': 'less',
+    // Backend
+    '.py': 'python', '.go': 'go', '.rs': 'rust', '.java': 'java', 
+    '.kt': 'kotlin', '.scala': 'scala', '.rb': 'ruby', '.php': 'php',
+    '.cs': 'csharp', '.fs': 'fsharp', '.vb': 'vbnet',
+    // Systems
+    '.c': 'c', '.cpp': 'cpp', '.cc': 'cpp', '.cxx': 'cpp',
+    '.h': 'c', '.hpp': 'cpp', '.hxx': 'cpp',
+    // Functional
+    '.hs': 'haskell', '.elm': 'elm', '.clj': 'clojure', '.cljs': 'clojurescript',
+    '.ml': 'ocaml', '.mli': 'ocaml',
+    // Data/Config
+    '.json': 'json', '.yaml': 'yaml', '.yml': 'yaml', '.toml': 'toml', 
+    '.xml': 'xml', '.sql': 'sql',
+    // Mobile
+    '.swift': 'swift', '.dart': 'dart', '.m': 'objectivec', '.mm': 'objectivec',
+    // Shell/Scripts
+    '.sh': 'shell', '.bash': 'bash', '.zsh': 'zsh', '.ps1': 'powershell',
+    '.pl': 'perl',
+    // Other
+    '.r': 'r', '.jl': 'julia', '.nim': 'nim', '.zig': 'zig', '.odin': 'odin'
+  };
+  
+  return langMap[extension.toLowerCase()] || 'other';
 }
 
-async function generateArchitectureFiles(agpPath: string, projectInfo: ProjectInfo, sourceFiles: SourceFile[]): Promise<void> {
+async function generateArchitectureFiles(agpPath: string, projectInfo: ProjectInfo, sourceFiles: SourceFile[], logger: Logger): Promise<void> {
   const architecturePath = path.join(agpPath, 'architecture');
   
   // Generate feature domains based on directory structure
@@ -112,26 +172,27 @@ async function generateArchitectureFiles(agpPath: string, projectInfo: ProjectIn
   const projectOverviewContent = generateProjectOverviewContent(projectInfo, sourceFiles);
   await fs.writeFile(path.join(architecturePath, 'project-overview.md'), projectOverviewContent);
   
-  console.log(chalk.gray('  📋 Architecture documentation generated'));
+  logger.info('  📋 Architecture documentation generated');
 }
 
-async function generatePatternFiles(agpPath: string, projectInfo: ProjectInfo, sourceFiles: SourceFile[]): Promise<void> {
+async function generatePatternFiles(agpPath: string, projectInfo: ProjectInfo, sourceFiles: SourceFile[], logger: Logger): Promise<void> {
   const patternsPath = path.join(agpPath, 'patterns');
   
-  // Generate component patterns if this is a frontend project
-  if (['react', 'nextjs', 'vue'].includes(projectInfo.type)) {
-    const componentPatternContent = generateComponentPatternContent(sourceFiles);
-    await fs.writeFile(path.join(patternsPath, 'component-patterns.md'), componentPatternContent);
+  // Generate code organization patterns based on detected directory structure
+  const sourceCodeFiles = sourceFiles.filter(f => f.type === 'source');
+  if (sourceCodeFiles.length > 0) {
+    const codePatternContent = generateCodeOrganizationPatternContent(sourceCodeFiles, projectInfo);
+    await fs.writeFile(path.join(patternsPath, 'code-organization-patterns.md'), codePatternContent);
   }
   
-  // Generate API patterns if API files are found
-  const apiFiles = sourceFiles.filter(f => f.type === 'api');
-  if (apiFiles.length > 0) {
-    const apiPatternContent = generateApiPatternContent(apiFiles);
-    await fs.writeFile(path.join(patternsPath, 'api-patterns.md'), apiPatternContent);
+  // Generate testing patterns if test files are found
+  const testFiles = sourceFiles.filter(f => f.type === 'test');
+  if (testFiles.length > 0) {
+    const testPatternContent = generateTestPatternContent(testFiles);
+    await fs.writeFile(path.join(patternsPath, 'testing-patterns.md'), testPatternContent);
   }
   
-  console.log(chalk.gray('  🎨 Pattern documentation generated'));
+  logger.info('  🎨 Pattern documentation generated');
 }
 
 function extractFeatureDomains(sourceFiles: SourceFile[]): Record<string, string[]> {
@@ -197,49 +258,55 @@ ${Array.from(new Set(sourceFiles.map(f => f.relativePath.split('/')[1]).filter(B
 `;
 }
 
-function generateComponentPatternContent(sourceFiles: SourceFile[]): string {
-  const componentFiles = sourceFiles.filter(f => f.type === 'component');
+function generateCodeOrganizationPatternContent(sourceFiles: SourceFile[], projectInfo: ProjectInfo): string {
+  const languages = [...new Set(sourceFiles.map(f => f.language))];
+  const directories = [...new Set(sourceFiles.map(f => f.relativePath.split('/')[1]).filter(Boolean))];
   
-  return `# Component Patterns
+  return `# Code Organization Patterns
 
-This document describes the component patterns used in this project.
+This document describes the code organization patterns used in this ${projectInfo.type} project.
 
-## Component Structure
-- **Total Components**: ${componentFiles.length}
-- **File Extension**: ${componentFiles[0]?.language || 'tsx'}
+## Languages Used
+${languages.map(lang => `- **${lang}**: ${sourceFiles.filter(f => f.language === lang).length} files`).join('\n')}
 
-## Naming Convention
-Components follow these patterns:
-${componentFiles.slice(0, 5).map(f => `- \`${path.basename(f.relativePath)}\``).join('\n')}
+## Directory Structure
+${directories.map(dir => `- **${dir}/**: ${sourceFiles.filter(f => f.relativePath.includes(dir || '')).length} files`).join('\n')}
 
-## Directory Organization
-Components are organized in: \`${componentFiles.length > 0 ? componentFiles[0]!.relativePath.split('/').slice(0, -1).join('/') : 'src/components'}\`
+## File Naming Patterns
+Common file naming patterns found:
+${sourceFiles.slice(0, 10).map(f => `- \`${path.basename(f.relativePath)}\` (${f.language})`).join('\n')}
 
 ## Best Practices
-- Use functional components with hooks
-- Follow the established naming convention
-- Keep components focused and single-purpose
-- Document component props and usage in AGP knowledge files
+- Follow the established directory structure
+- Use consistent naming conventions across similar files
+- Keep related functionality grouped in the same directories
+- Document module purposes and dependencies in AGP knowledge files
 `;
 }
 
-function generateApiPatternContent(apiFiles: SourceFile[]): string {
-  return `# API Patterns
+function generateTestPatternContent(testFiles: SourceFile[]): string {
+  const testDirs = [...new Set(testFiles.map(f => f.relativePath.split('/').slice(0, -1).join('/')))];
+  const testLanguages = [...new Set(testFiles.map(f => f.language))];
+  
+  return `# Testing Patterns
 
-This document describes the API patterns used in this project.
+This document describes the testing patterns used in this project.
 
-## API Structure
-- **Total API Files**: ${apiFiles.length}
-- **Location**: \`${apiFiles.length > 0 ? apiFiles[0]!.relativePath.split('/').slice(0, -1).join('/') : 'src/api'}\`
+## Test Structure
+- **Total Test Files**: ${testFiles.length}
+- **Languages**: ${testLanguages.join(', ')}
 
-## Files
-${apiFiles.map(f => `- \`${f.relativePath}\``).join('\n')}
+## Test Locations
+${testDirs.map(dir => `- \`${dir}/\``).join('\n')}
+
+## Test Files
+${testFiles.slice(0, 10).map(f => `- \`${f.relativePath}\` (${f.language})`).join('\n')}
 
 ## Best Practices
-- Keep API logic separate from UI components
-- Use consistent error handling
-- Document API endpoints and responses
-- Follow RESTful conventions where applicable
+- Keep tests close to the code they test
+- Use consistent naming conventions for test files
+- Follow the established test directory structure
+- Document test scenarios and coverage expectations
 `;
 }
 

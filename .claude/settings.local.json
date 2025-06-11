@@ -13,7 +13,10 @@
       "Bash(git submodule:*)",
       "Bash(cat:*)",
       "Bash(./dist/cli.js init:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(git commit:*)",
+      "Bash(pnpm start:*)",
+      "Bash(cp:*)"
     ],
     "deny": []
   }

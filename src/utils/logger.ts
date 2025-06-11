@@ -83,7 +83,7 @@ class Logger {
   /**
    * Clear current progress line
    */
-  private clearProgress(): void {
+  clearProgress(): void {
     if (this.isProgressActive && this.currentProgress) {
       // Calculate the actual display length (excluding emoji which might be 2 chars)
       const displayLength = this.currentProgress.length + 2; // +2 for emoji
