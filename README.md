@@ -45,8 +45,7 @@ Once initialized, any AI assistant can:
 | `agp init` | Initialize AGP in your project with template setup |
 | `agp start` | Start or resume your development session |
 | `agp push` | Push session progress and knowledge to remote repository |
-| `agp link` | Link to existing AGP knowledge repository |
-| `agp connect` | Connect to shared AGP workspace |
+| `agp connect <tool>` | Configure AGP for AI tools (claude, cursor, chatgpt) |
 
 ## 🏗️ How It Works
 

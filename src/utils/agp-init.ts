@@ -1,6 +1,5 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import chalk from 'chalk';
 import { AgpInitOptions } from '../types';
 import { detectProjectType } from './project-detector';
 import { downloadTemplate } from './template-manager';
@@ -28,11 +27,11 @@ export async function initializeAgpDirectory(options: AgpInitOptions): Promise<v
   logger.startGroup('AGP Initialization');
 
   // Check if .agp already exists
-  if (await fs.pathExists(agpPath) && !options.force) {
+  if ((await fs.pathExists(agpPath)) && !options.force) {
     // Check if .agp directory is empty (cloned project case)
     const agpContents = await fs.readdir(agpPath);
-    const nonHiddenFiles = agpContents.filter(file => !file.startsWith('.'));
-    
+    const nonHiddenFiles = agpContents.filter((file) => !file.startsWith('.'));
+
     if (nonHiddenFiles.length === 0) {
       logger.info('Empty .agp directory detected. Pulling submodule content...');
       await pullSubmoduleContent(cwd);
@@ -51,7 +50,7 @@ export async function initializeAgpDirectory(options: AgpInitOptions): Promise<v
 
   // Backup existing config if force is enabled
   let existingConfig: AgpConfig | null = null;
-  if (options.force && await fs.pathExists(configPath)) {
+  if (options.force && (await fs.pathExists(configPath))) {
     try {
       logger.progress('Backing up existing config');
       const configContent = await fs.readFile(configPath, 'utf8');
@@ -97,7 +96,11 @@ export async function initializeAgpDirectory(options: AgpInitOptions): Promise<v
 
   // Initialize as git submodule
   logger.step('Setting up Git submodule');
-  const submoduleUrl = await initializeSubmodule(agpPath, existingConfig?.submodule?.repository || undefined, templateUrl);
+  const submoduleUrl = await initializeSubmodule(
+    agpPath,
+    existingConfig?.submodule?.repository || undefined,
+    templateUrl,
+  );
 
   // Create or restore config file
   logger.progress('Creating config file');
@@ -115,7 +118,6 @@ export async function initializeAgpDirectory(options: AgpInitOptions): Promise<v
   }
 }
 
-
 async function initializeSubmodule(agpPath: string, existingUrl?: string, templateUrl?: string): Promise<string> {
   const { execSync } = await import('child_process');
   const inquirer = await import('inquirer');
@@ -130,7 +132,7 @@ async function initializeSubmodule(agpPath: string, existingUrl?: string, templa
       // Ignore cleanup errors
     }
   };
-  
+
   process.on('SIGINT', () => {
     cleanup();
     logger.warning('Operation cancelled by user');
@@ -197,9 +199,9 @@ async function initializeSubmodule(agpPath: string, existingUrl?: string, templa
       } catch (error) {
         // Repository might not be empty, ask user what to do
         process.chdir(cwd); // Go back to original directory first
-        
+
         logger.warning('Repository contains existing content.');
-        
+
         const action = await inquirer.default.prompt([
           {
             type: 'list',
@@ -208,11 +210,11 @@ async function initializeSubmodule(agpPath: string, existingUrl?: string, templa
             choices: [
               { name: 'Overwrite with new template', value: 'overwrite' },
               { name: 'Merge with existing content', value: 'merge' },
-              { name: 'Cancel and use different repository', value: 'cancel' }
-            ]
-          }
+              { name: 'Cancel and use different repository', value: 'cancel' },
+            ],
+          },
         ]);
-        
+
         if (action.action === 'cancel') {
           // Remove the created .agp directory and start over
           await fs.remove(agpPath);
@@ -223,7 +225,7 @@ async function initializeSubmodule(agpPath: string, existingUrl?: string, templa
           // Force push to overwrite existing content
           process.chdir(agpPath);
           logger.progress('Overwriting existing repository content');
-          
+
           // First try to pull and merge if possible
           try {
             execSync('git pull origin main --allow-unrelated-histories', { stdio: 'pipe' });
@@ -232,7 +234,7 @@ async function initializeSubmodule(agpPath: string, existingUrl?: string, templa
             // If pull fails, do a force push
             execSync('git push --force origin main', { stdio: 'pipe' });
           }
-          
+
           logger.progressDone('Repository content overwritten');
         } else if (action.action === 'merge') {
           // Clone existing repository first, then merge template
@@ -240,12 +242,12 @@ async function initializeSubmodule(agpPath: string, existingUrl?: string, templa
           logger.progress('Cloning existing repository');
           execSync(`git submodule add ${repositoryUrl} .agp`, { cwd, stdio: 'pipe' });
           logger.progressDone('Existing repository cloned');
-          
+
           // Merge template content with existing
           logger.progress('Merging template with existing content');
           await mergeTemplateWithExisting(agpPath, templateUrl!);
           logger.progressDone('Template merged with existing content');
-          
+
           // Commit merged changes
           process.chdir(agpPath);
           execSync('git add .', { stdio: 'pipe' });
@@ -256,7 +258,7 @@ async function initializeSubmodule(agpPath: string, existingUrl?: string, templa
             // No changes to commit or push failed, that's ok
           }
         }
-        
+
         process.chdir(cwd); // Return to original directory
         logger.progressDone('Remote repository connected');
       }
@@ -279,26 +281,25 @@ async function initializeSubmodule(agpPath: string, existingUrl?: string, templa
       logger.success('Git submodule initialized successfully!');
       success = true;
       return repositoryUrl;
-
     } catch (error) {
       process.chdir(cwd); // Ensure we're back in original directory
 
       // Clean up .agp directory if it was created
-      if (await import('fs-extra').then(fs => fs.pathExists(agpPath))) {
-        await import('fs-extra').then(fs => fs.remove(agpPath));
+      if (await import('fs-extra').then((fs) => fs.pathExists(agpPath))) {
+        await import('fs-extra').then((fs) => fs.remove(agpPath));
         // Recreate .agp with original content
         await setupAgpDirectoryAgain(agpPath);
       }
 
       retryCount++;
-      
+
       logger.error(`Failed to connect to repository (attempt ${retryCount}/${maxRetries})`);
       logger.warning('Please check:');
       logger.step('Repository exists and is empty');
       logger.step('You have push permissions');
       logger.step('URL format is correct');
       logger.step('Repository is accessible');
-      
+
       // Reset repository URL for retry if we haven't exceeded max retries
       if (retryCount < maxRetries) {
         repositoryUrl = '';
@@ -319,12 +320,12 @@ async function initializeSubmodule(agpPath: string, existingUrl?: string, templa
 function isValidGitUrl(url: string): boolean {
   // Check for common Git URL patterns
   const patterns = [
-    /^git@[\w\.-]+:[\w\.-]+\/[\w\.-]+\.git$/,              // SSH: git@github.com:user/repo.git
-    /^https?:\/\/[\w\.-]+\/[\w\.-]+\/[\w\.-]+\.git$/,      // HTTPS: https://github.com/user/repo.git
-    /^https?:\/\/[\w\.-]+\/[\w\.-]+\/[\w\.-]+$/,           // HTTPS without .git
+    /^git@[\w\.-]+:[\w\.-]+\/[\w\.-]+\.git$/, // SSH: git@github.com:user/repo.git
+    /^https?:\/\/[\w\.-]+\/[\w\.-]+\/[\w\.-]+\.git$/, // HTTPS: https://github.com/user/repo.git
+    /^https?:\/\/[\w\.-]+\/[\w\.-]+\/[\w\.-]+$/, // HTTPS without .git
   ];
 
-  return patterns.some(pattern => pattern.test(url));
+  return patterns.some((pattern) => pattern.test(url));
 }
 
 async function setupAdditionalStructure(agpPath: string): Promise<void> {
@@ -338,21 +339,24 @@ async function setupAdditionalStructure(agpPath: string): Promise<void> {
 *.tmp
 `;
   await fs.writeFile(gitignorePath, gitignoreContent);
-
 }
 
-async function createConfigFile(agpPath: string, existingConfig: AgpConfig | null, submoduleUrl: string): Promise<void> {
+async function createConfigFile(
+  agpPath: string,
+  existingConfig: AgpConfig | null,
+  submoduleUrl: string,
+): Promise<void> {
   const configPath = path.join(agpPath, '.config.json');
 
   const config: AgpConfig = {
     session: existingConfig?.session || {
       user: '',
-      current: ''
+      current: '',
     },
     submodule: {
       repository: submoduleUrl,
-      lastUpdated: new Date().toISOString()
-    }
+      lastUpdated: new Date().toISOString(),
+    },
   };
 
   await fs.writeFile(configPath, JSON.stringify(config, null, 2));
@@ -366,15 +370,10 @@ async function validateAgpSetup(agpPath: string): Promise<void> {
     'architecture/overview.md',
     'patterns/overview.md',
     'architecture/feature-domains.md',
-    'architecture/project-overview.md'
+    'architecture/project-overview.md',
   ];
 
-  const requiredDirs = [
-    'sessions',
-    'architecture',
-    'patterns',
-    'project'
-  ];
+  const requiredDirs = ['sessions', 'architecture', 'patterns', 'project'];
 
   // Check required files
   for (const file of requiredFiles) {
@@ -400,7 +399,7 @@ async function validateAgpSetup(agpPath: string): Promise<void> {
     const submoduleStatus = execSync('git submodule status .agp', {
       cwd,
       encoding: 'utf8',
-      stdio: 'pipe'
+      stdio: 'pipe',
     });
 
     if (!submoduleStatus.trim()) {
@@ -409,7 +408,6 @@ async function validateAgpSetup(agpPath: string): Promise<void> {
 
     logger.debug('All required files and directories present');
     logger.debug('Git submodule properly configured');
-
   } catch (error) {
     throw new Error('Git submodule validation failed');
   }
@@ -419,19 +417,19 @@ async function mergeTemplateWithExisting(agpPath: string, templateUrl: string): 
   // Create a temporary directory for template download
   const tempDir = path.join(agpPath, '.temp-template');
   await fs.ensureDir(tempDir);
-  
+
   try {
     // Download template to temporary directory
     await downloadTemplate(templateUrl, tempDir);
-    
+
     // Merge template files with existing content
     // Priority: existing files > template files (don't overwrite existing)
     const templateFiles = await fs.readdir(tempDir);
-    
+
     for (const file of templateFiles) {
       const templateFilePath = path.join(tempDir, file);
       const targetFilePath = path.join(agpPath, file);
-      
+
       if (!(await fs.pathExists(targetFilePath))) {
         // File doesn't exist in target, copy from template
         await fs.copy(templateFilePath, targetFilePath);
@@ -441,7 +439,7 @@ async function mergeTemplateWithExisting(agpPath: string, templateUrl: string): 
       }
       // For other existing files, keep the existing version
     }
-    
+
     // Clean up temporary directory
     await fs.remove(tempDir);
   } catch (error) {
@@ -453,21 +451,20 @@ async function mergeTemplateWithExisting(agpPath: string, templateUrl: string): 
 
 async function pullSubmoduleContent(cwd: string): Promise<void> {
   const { execSync } = await import('child_process');
-  
+
   try {
     // Initialize and update submodules
     logger.progress('Initializing submodule');
     execSync('git submodule init', { cwd, stdio: 'pipe' });
     logger.progressDone('Submodule initialized');
-    
+
     logger.progress('Pulling submodule content');
     execSync('git submodule update --remote', { cwd, stdio: 'pipe' });
     logger.progressDone('Submodule content pulled');
-    
+
     // Validate the setup
     const agpPath = path.join(cwd, '.agp');
     await validateAgpSetup(agpPath);
-    
   } catch (error) {
     throw new Error(`Failed to pull submodule content: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }

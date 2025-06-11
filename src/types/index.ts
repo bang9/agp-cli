@@ -7,11 +7,6 @@ export interface AgpPushOptions {
   message?: string;
 }
 
-export interface AgpLinkOptions {
-  repositoryUrl: string;
-  force: boolean;
-}
-
 export interface AgpConnectOptions {
   tool: string;
   configPath?: string;

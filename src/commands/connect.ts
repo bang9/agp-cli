@@ -9,18 +9,18 @@ export const connectCommand = new Command('connect')
   .action(async (tool, options) => {
     try {
       const supportedTools = ['claude', 'cursor', 'chatgpt'];
-      
+
       if (!supportedTools.includes(tool.toLowerCase())) {
         throw new Error(`Unsupported tool: ${tool}. Supported tools: ${supportedTools.join(', ')}`);
       }
-      
+
       logger.info(`Configuring AGP for ${tool}...`);
-      
+
       await connectToAiTool({
         tool: tool.toLowerCase(),
         configPath: options.config,
       });
-      
+
       logger.success(`AGP configured for ${tool} successfully!`);
     } catch (error) {
       logger.error('Failed to configure AGP:');

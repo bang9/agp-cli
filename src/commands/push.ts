@@ -7,14 +7,14 @@ export const pushCommand = new Command('push')
   .option('-m, --message <msg>', 'Commit message for AGP changes')
   .action(async (options) => {
     const logger = new Logger();
-    
+
     try {
       logger.info('🚀 Pushing AGP knowledge changes...');
-      
+
       await pushAgpChanges({
         message: options.message,
       });
-      
+
       logger.success('✅ AGP knowledge pushed successfully!');
       logger.info('💡 Your AI session progress is now saved and shared');
     } catch (error) {

@@ -40,13 +40,13 @@ export async function startAgpSession(): Promise<void> {
 
   // Get or prompt for user name
   let userName = config.session.user;
-  
+
   if (!userName || userName.trim() === '') {
     // Use readline for simpler input
     const readline = await import('readline');
     const rl = readline.createInterface({
       input: process.stdin,
-      output: process.stdout
+      output: process.stdout,
     });
 
     userName = await new Promise<string>((resolve) => {
@@ -80,7 +80,7 @@ export async function startAgpSession(): Promise<void> {
   // Update config with current user and session
   config.session.user = userName;
   config.session.current = `.agp/sessions/${userName}/index.md`;
-  
+
   await fs.writeFile(configPath, JSON.stringify(config, null, 2));
 
   logger.endGroup('Session started successfully!');
@@ -131,19 +131,19 @@ async function loadExistingSession(sessionFilePath: string): Promise<void> {
 async function showSessionOverview(sessionFilePath: string): Promise<void> {
   try {
     const sessionContent = await fs.readFile(sessionFilePath, 'utf8');
-    
+
     // Extract in-progress tasks
     const inProgressMatch = sessionContent.match(/## In Progress\n([\s\S]*?)(?=\n## |$)/);
     if (inProgressMatch && inProgressMatch[1]) {
       const tasks = inProgressMatch[1]
         .split('\n')
-        .filter(line => line.trim().startsWith('- [ ]'))
-        .map(task => task.replace('- [ ]', '').trim())
-        .filter(task => task.length > 0);
+        .filter((line) => line.trim().startsWith('- [ ]'))
+        .map((task) => task.replace('- [ ]', '').trim())
+        .filter((task) => task.length > 0);
 
       if (tasks.length > 0) {
         logger.info('Current Tasks:');
-        tasks.forEach(task => {
+        tasks.forEach((task) => {
           logger.step(task);
         });
       }
@@ -154,20 +154,19 @@ async function showSessionOverview(sessionFilePath: string): Promise<void> {
     if (activeFilesMatch && activeFilesMatch[1]) {
       const files = activeFilesMatch[1]
         .split('\n')
-        .filter(line => line.trim().startsWith('- ') && !line.includes('(No active files'))
-        .map(line => line.replace(/^- /, '').trim())
-        .filter(file => file.length > 0);
+        .filter((line) => line.trim().startsWith('- ') && !line.includes('(No active files'))
+        .map((line) => line.replace(/^- /, '').trim())
+        .filter((file) => file.length > 0);
 
       if (files.length > 0) {
         logger.info('Active Files:');
-        files.forEach(file => {
+        files.forEach((file) => {
           logger.step(file);
         });
       }
     }
 
     logger.info('You can now start working! AI will automatically track your progress.');
-    
   } catch (error) {
     // Don't throw, just skip the overview
     logger.debug('Could not show session overview');

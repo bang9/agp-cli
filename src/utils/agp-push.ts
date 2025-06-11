@@ -34,7 +34,7 @@ export async function pushAgpChanges(options: AgpPushOptions): Promise<void> {
     // Show what changes will be pushed
     const changedFiles = status.trim().split('\n');
     logger.info(`📄 Found ${changedFiles.length} modified AGP files:`);
-    changedFiles.slice(0, 5).forEach(file => {
+    changedFiles.slice(0, 5).forEach((file) => {
       const fileName = file.substring(3); // Remove git status prefix
       logger.info(`   ${fileName}`);
     });
@@ -44,7 +44,7 @@ export async function pushAgpChanges(options: AgpPushOptions): Promise<void> {
 
     // Generate commit message if not provided
     const commitMessage = options.message || generateCommitMessage(changedFiles);
-    
+
     logger.progress('Adding changes to AGP repository');
     execSync('git add .', { stdio: 'pipe' });
 
@@ -56,10 +56,10 @@ export async function pushAgpChanges(options: AgpPushOptions): Promise<void> {
 
     // Update submodule reference in parent repository
     process.chdir(cwd);
-    
+
     logger.progress('Updating submodule reference');
     execSync('git add .agp', { stdio: 'pipe' });
-    
+
     // Check if parent has changes to commit
     const parentStatus = execSync('git status --porcelain', { encoding: 'utf8' });
     if (parentStatus.includes('.agp')) {
@@ -68,7 +68,6 @@ export async function pushAgpChanges(options: AgpPushOptions): Promise<void> {
     }
 
     logger.clearProgress();
-    
   } catch (error) {
     logger.clearProgress();
     throw new Error(`Failed to push AGP changes: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -79,18 +78,18 @@ export async function pushAgpChanges(options: AgpPushOptions): Promise<void> {
 }
 
 function generateCommitMessage(changedFiles: string[]): string {
-  const sessionFiles = changedFiles.filter(f => f.includes('sessions/'));
-  const knowledgeFiles = changedFiles.filter(f => f.includes('project/'));
-  const patternFiles = changedFiles.filter(f => f.includes('patterns/'));
-  const architectureFiles = changedFiles.filter(f => f.includes('architecture/'));
-  
+  const sessionFiles = changedFiles.filter((f) => f.includes('sessions/'));
+  const knowledgeFiles = changedFiles.filter((f) => f.includes('project/'));
+  const patternFiles = changedFiles.filter((f) => f.includes('patterns/'));
+  const architectureFiles = changedFiles.filter((f) => f.includes('architecture/'));
+
   const parts = [];
   if (sessionFiles.length > 0) parts.push('session progress');
   if (knowledgeFiles.length > 0) parts.push('project knowledge');
   if (patternFiles.length > 0) parts.push('patterns');
   if (architectureFiles.length > 0) parts.push('architecture');
-  
+
   if (parts.length === 0) return 'docs: update AGP knowledge';
-  
+
   return `docs: update ${parts.join(', ')}`;
 }

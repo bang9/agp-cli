@@ -665,6 +665,33 @@ The system works when:
 
 **MANDATORY**: AI must read and follow ALL requirements in this file before any task execution.
 
+### Requirements Update Process
+
+**When AI Should Update Requirements**:
+1. **User provides explicit behavioral rules** (e.g., "always use logger instead of console.log")
+2. **User corrects repeated mistakes** that indicate a missing requirement
+3. **User establishes new coding standards** for the project
+4. **User expresses preferences** that should apply to all future work
+
+**How to Update Requirements**:
+1. **Read current requirements.md** to understand existing structure
+2. **Add new requirements** to appropriate sections:
+   - Code Standards (for coding rules)
+   - Git and Commit Standards (for version control rules)
+   - Tool Usage (for development tool preferences)
+   - Communication (for response style preferences)
+3. **Update version number** and last updated date at bottom
+4. **Be specific and actionable** - write rules that future AI can follow exactly
+5. **Use consistent formatting** with existing requirements
+
+**Requirements Update Examples**:
+- User says "use logger not console.log" → Add to Code Standards
+- User corrects commit message format → Add to Git Standards  
+- User prefers specific response style → Add to Communication
+- User establishes testing requirements → Add to Tool Usage
+
+**CRITICAL**: Always update requirements.md when user establishes new rules to ensure consistent behavior across all AI interactions.
+
 ## Critical Notes
 
 - The `.agp` directory is a Git submodule (separate from main codebase)

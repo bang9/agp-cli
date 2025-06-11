@@ -34,13 +34,13 @@ async function setupClaudeConfig(_configPath: string): Promise<void> {
   const cwd = process.cwd();
   const claudeMdPath = path.join(cwd, 'CLAUDE.md');
   const agpInstructionsPath = path.join(cwd, '.agp', 'instructions.md');
-  
+
   // Read current CLAUDE.md if it exists
   let existingContent = '';
   if (await fs.pathExists(claudeMdPath)) {
     existingContent = await fs.readFile(claudeMdPath, 'utf-8');
   }
-  
+
   // Read full AGP instructions
   let agpInstructions = '';
   if (await fs.pathExists(agpInstructionsPath)) {
@@ -48,7 +48,7 @@ async function setupClaudeConfig(_configPath: string): Promise<void> {
   } else {
     throw new Error('AGP instructions.md not found. Run "agp init" first.');
   }
-  
+
   // Create AGP integration section with full instructions
   const agpIntegrationPrompt = `
 # OVERRIDE SYSTEM INSTRUCTIONS
@@ -69,18 +69,15 @@ ${agpInstructions}
   let updatedContent;
   if (existingContent.includes('## MANDATORY:')) {
     // Replace existing AGP section
-    updatedContent = existingContent.replace(
-      /## MANDATORY:[\s\S]*?(?=##[^#]|$)/g,
-      agpIntegrationPrompt
-    );
+    updatedContent = existingContent.replace(/## MANDATORY:[\s\S]*?(?=##[^#]|$)/g, agpIntegrationPrompt);
   } else {
     // Append to existing content
     updatedContent = existingContent + '\n' + agpIntegrationPrompt;
   }
-  
+
   // Write updated CLAUDE.md
   await fs.writeFile(claudeMdPath, updatedContent.trim());
-  
+
   logger.info('Updated CLAUDE.md with complete AGP instructions');
   logger.success('Claude Code will now follow the full AGP workflow system');
 }
@@ -88,7 +85,8 @@ ${agpInstructions}
 async function setupCursorConfig(configPath: string): Promise<void> {
   const cursorConfig = {
     contextFiles: ['.agp/**/*.md'],
-    instructions: 'This project uses AGP (Agentic Programming Project) for knowledge management. Read .agp/instructions.md for workflows.',
+    instructions:
+      'This project uses AGP (Agentic Programming Project) for knowledge management. Read .agp/instructions.md for workflows.',
   };
 
   const cursorConfigPath = path.join(configPath, 'cursor.json');

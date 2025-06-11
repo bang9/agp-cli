@@ -9,12 +9,12 @@ export const initCommand = new Command('init')
   .action(async (options) => {
     try {
       logger.info('Initializing AGP system...');
-      
+
       await initializeAgpDirectory({
         force: options.force || false,
         templateUrl: options.template,
       });
-      
+
       logger.success('AGP system initialized successfully!');
       logger.info('Next steps:');
       logger.step('Review .agp/instructions.md');

@@ -123,9 +123,9 @@ class Logger {
 
     const spinnerChars = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
     let spinnerIndex = 0;
-    
+
     this.clearProgress();
-    
+
     const spinnerInterval = setInterval(() => {
       process.stdout.write(`\r${chalk.gray(spinnerChars[spinnerIndex])} ${chalk.gray(message)}...`);
       spinnerIndex = (spinnerIndex + 1) % spinnerChars.length;

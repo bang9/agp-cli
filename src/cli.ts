@@ -1,11 +1,9 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import chalk from 'chalk';
 import { initCommand } from './commands/init';
 import { createStartCommand } from './commands/start';
 import { pushCommand } from './commands/push';
-import { linkCommand } from './commands/link';
 import { connectCommand } from './commands/connect';
 
 const program = new Command();
@@ -19,15 +17,7 @@ program
 program.addCommand(initCommand);
 program.addCommand(createStartCommand());
 program.addCommand(pushCommand);
-program.addCommand(linkCommand);
 program.addCommand(connectCommand);
 
-// Error handling
-program.exitOverride();
-
-try {
-  program.parse();
-} catch (error) {
-  console.error(chalk.red('Error:'), error instanceof Error ? error.message : 'Unknown error occurred');
-  process.exit(1);
-}
+// Parse command line arguments
+program.parse();

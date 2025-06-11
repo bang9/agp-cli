@@ -17,7 +17,11 @@
       "Bash(git commit:*)",
       "Bash(pnpm start:*)",
       "Bash(cp:*)",
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "Bash(npm whoami:*)",
+      "Bash(./dist/cli.js --help)",
+      "Bash(git init:*)",
+      "Bash(npm publish:*)"
     ],
     "deny": []
   }
