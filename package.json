@@ -1,6 +1,6 @@
 {
   "name": "agp-cli",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Agentic Programming Project CLI - Standardized knowledge layer for AI-assisted development",
   "main": "dist/cli.js",
   "bin": {

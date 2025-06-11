@@ -65,7 +65,7 @@ export async function pushAgpChanges(options: AgpPushOptions): Promise<void> {
     // Check if there are any changes
     const status = execSync('git status --porcelain', { encoding: 'utf8' });
     if (!status.trim()) {
-      logger.info('No changes to push');
+      logger.success('No changes to push');
       return;
     }
 
