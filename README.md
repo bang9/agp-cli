@@ -100,10 +100,7 @@ AGP prevents collaboration conflicts through session management:
 
 ## 📖 Documentation
 
-- [Getting Started Guide](docs/getting-started.md)
-- [Architecture Overview](docs/architecture.md)
-- [Session Management](docs/sessions.md)
-- [Best Practices](docs/best-practices.md)
+All documentation is auto-generated in your `.agp` directory after running `agp init`.
 
 ## 🤖 AI Integration
 
@@ -122,8 +119,6 @@ MIT License - see [LICENSE](LICENSE) for details.
 ## 🙋‍♂️ Support
 
 - [Issues](https://github.com/bang9/agp-cli/issues)
-- [Discussions](https://github.com/bang9/agp-cli/discussions)
-- [Documentation](https://agp-cli.dev)
 
 ---
 
