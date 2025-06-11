@@ -204,33 +204,37 @@ async function initializeSubmodule(agpPath: string, existingUrl?: string, templa
           continue; // Go back to asking for repository URL
         } else if (action.action === 'overwrite') {
           // Force push to overwrite existing content
-          process.chdir(agpPath);
+          await logger.withSpinner('Setting up repository', async () => {
+            process.chdir(agpPath);
 
-          // First try to pull and merge if possible
-          try {
-            execSync('git pull origin main --allow-unrelated-histories', { stdio: 'pipe' });
-            execSync('git push origin main', { stdio: 'pipe' });
-          } catch {
-            // If pull fails, do a force push
-            execSync('git push --force origin main', { stdio: 'pipe' });
-          }
+            // First try to pull and merge if possible
+            try {
+              execSync('git pull origin main --allow-unrelated-histories', { stdio: 'pipe' });
+              execSync('git push origin main', { stdio: 'pipe' });
+            } catch {
+              // If pull fails, do a force push
+              execSync('git push --force origin main', { stdio: 'pipe' });
+            }
+          });
         } else if (action.action === 'merge') {
           // Clone existing repository first, then merge template
-          await fs.remove(agpPath); // Remove current .agp
-          execSync(`git submodule add ${repositoryUrl} .agp`, { cwd, stdio: 'pipe' });
+          await logger.withSpinner('Setting up repository', async () => {
+            await fs.remove(agpPath); // Remove current .agp
+            execSync(`git submodule add ${repositoryUrl} .agp`, { cwd, stdio: 'pipe' });
 
-          // Merge template content with existing
-          await mergeTemplateWithExisting(agpPath, templateUrl!);
+            // Merge template content with existing
+            await mergeTemplateWithExisting(agpPath, templateUrl!);
 
-          // Commit merged changes
-          process.chdir(agpPath);
-          execSync('git add .', { stdio: 'pipe' });
-          try {
-            execSync('git commit -m "Merge AGP template with existing content"', { stdio: 'pipe' });
-            execSync('git push origin main', { stdio: 'pipe' });
-          } catch {
-            // No changes to commit or push failed, that's ok
-          }
+            // Commit merged changes
+            process.chdir(agpPath);
+            execSync('git add .', { stdio: 'pipe' });
+            try {
+              execSync('git commit -m "Merge AGP template with existing content"', { stdio: 'pipe' });
+              execSync('git push origin main', { stdio: 'pipe' });
+            } catch {
+              // No changes to commit or push failed, that's ok
+            }
+          });
         }
 
         process.chdir(cwd); // Return to original directory
@@ -247,7 +251,9 @@ async function initializeSubmodule(agpPath: string, existingUrl?: string, templa
       }
 
       // Add .agp as a submodule
-      execSync(`git submodule add ${repositoryUrl} .agp`, { stdio: 'pipe' });
+      await logger.withSpinner('Setting up repository', async () => {
+        execSync(`git submodule add ${repositoryUrl} .agp`, { stdio: 'pipe' });
+      });
 
       success = true;
       return repositoryUrl;
