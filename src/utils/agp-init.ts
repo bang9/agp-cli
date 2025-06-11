@@ -57,45 +57,51 @@ export async function initializeAgpDirectory(options: AgpInitOptions): Promise<v
     }
   }
 
-  // Detect project type
-  const projectInfo = await detectProjectType(cwd);
-  logger.success(`Project analyzed (${projectInfo.type})`);  
-
-  // Remove existing .agp if force is enabled
-  if (await fs.pathExists(agpPath)) {
-    await fs.remove(agpPath);
-  }
-
-  // Download template
+  // Setup AGP structure
   const templateUrl = options.templateUrl || DEFAULT_TEMPLATE_URL;
-  await downloadTemplate(templateUrl, agpPath);
-  logger.success('Template downloaded');
-
-  // Ensure project directory exists
-  const projectPath = path.join(agpPath, 'project');
-  await fs.ensureDir(projectPath);
-
-  // Analyze project and generate documentation
-  await analyzeProject(cwd, projectInfo);
-  logger.success('Documentation generated');
+  const projectInfo = await logger.withSpinner('Setting up AGP structure', async () => {
+    // Detect project type
+    const detectedProjectInfo = await detectProjectType(cwd);
+    
+    // Remove existing .agp if force is enabled
+    if (await fs.pathExists(agpPath)) {
+      await fs.remove(agpPath);
+    }
+    
+    // Download template
+    await downloadTemplate(templateUrl, agpPath);
+    
+    // Ensure project directory exists
+    const projectPath = path.join(agpPath, 'project');
+    await fs.ensureDir(projectPath);
+    
+    // Analyze project and generate documentation
+    await analyzeProject(cwd, detectedProjectInfo);
+    
+    return detectedProjectInfo;
+  });
 
   // Create additional required directories and files
   await setupAdditionalStructure(agpPath);
 
-  // Initialize as git submodule
+  // Initialize git submodule (this has its own user interaction)
   const submoduleUrl = await initializeSubmodule(
     agpPath,
     existingConfig?.submodule?.repository || undefined,
     templateUrl,
   );
-  logger.success('Git submodule configured');
+  
+  // Use projectInfo for logging
+  logger.debug(`Project type: ${projectInfo.type}`);
 
-  // Create or restore config file
-  await createConfigFile(agpPath, existingConfig, submoduleUrl);
-
-  // Validation step
-  await validateAgpSetup(agpPath);
-  logger.success('Setup validated');
+  // Finalize setup
+  await logger.withSpinner('Finalizing setup', async () => {
+    // Create or restore config file
+    await createConfigFile(agpPath, existingConfig, submoduleUrl);
+    
+    // Validation step
+    await validateAgpSetup(agpPath);
+  });
 
   logger.success('AGP system ready!');
   logger.info('');
