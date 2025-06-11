@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import ora from 'ora';
 
 interface LoggerOptions {
   verbose?: boolean;
@@ -121,27 +122,14 @@ class Logger {
       return await operation();
     }
 
-    const spinnerChars = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
-    let spinnerIndex = 0;
-
-    this.clearProgress();
-
-    // Initial display
-    process.stdout.write(`${chalk.cyan(spinnerChars[0])} ${message}...`);
-    
-    const spinnerInterval = setInterval(() => {
-      spinnerIndex = (spinnerIndex + 1) % spinnerChars.length;
-      process.stdout.write(`\r${chalk.cyan(spinnerChars[spinnerIndex])} ${message}...`);
-    }, 120);
+    const spinner = ora(message).start();
 
     try {
       const result = await operation();
-      clearInterval(spinnerInterval);
-      process.stdout.write(`\r${chalk.green('✓')} ${message}\n`);
+      spinner.succeed(message);
       return result;
     } catch (error) {
-      clearInterval(spinnerInterval);
-      process.stdout.write(`\r${chalk.red('✗')} ${message}\n`);
+      spinner.fail(message);
       throw error;
     }
   }

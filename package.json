@@ -1,6 +1,6 @@
 {
   "name": "agp-cli",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Agentic Programming Project CLI - Standardized knowledge layer for AI-assisted development",
   "main": "dist/cli.js",
   "bin": {
@@ -62,6 +62,7 @@
     "fs-extra": "^11.3.0",
     "inquirer": "^12.6.3",
     "node-fetch": "^3.3.2",
+    "ora": "^8.2.0",
     "yauzl": "^3.2.0"
   }
 }
