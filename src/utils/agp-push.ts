@@ -27,49 +27,32 @@ export async function pushAgpChanges(options: AgpPushOptions): Promise<void> {
     // Check if there are any changes
     const status = execSync('git status --porcelain', { encoding: 'utf8' });
     if (!status.trim()) {
-      logger.info('📝 No AGP changes to push - knowledge is up to date');
+      logger.info('No changes to push');
       return;
     }
 
-    // Show what changes will be pushed
     const changedFiles = status.trim().split('\n');
-    logger.info(`📄 Found ${changedFiles.length} modified AGP files:`);
-    changedFiles.slice(0, 5).forEach((file) => {
-      const fileName = file.substring(3); // Remove git status prefix
-      logger.info(`   ${fileName}`);
-    });
-    if (changedFiles.length > 5) {
-      logger.info(`   ... and ${changedFiles.length - 5} more files`);
-    }
+    logger.info(`Pushing ${changedFiles.length} AGP files...`);
 
     // Generate commit message if not provided
     const commitMessage = options.message || generateCommitMessage(changedFiles);
 
-    logger.progress('Adding changes to AGP repository');
     execSync('git add .', { stdio: 'pipe' });
-
-    logger.progress('Committing AGP knowledge updates');
     execSync(`git commit -m "${commitMessage}"`, { stdio: 'pipe' });
-
-    logger.progress('Pushing to remote AGP repository');
     execSync('git push', { stdio: 'pipe' });
 
     // Update submodule reference in parent repository
     process.chdir(cwd);
-
-    logger.progress('Updating submodule reference');
     execSync('git add .agp', { stdio: 'pipe' });
 
     // Check if parent has changes to commit
     const parentStatus = execSync('git status --porcelain', { encoding: 'utf8' });
     if (parentStatus.includes('.agp')) {
       execSync(`git commit -m "chore: update AGP submodule pointer"`, { stdio: 'pipe' });
-      logger.info('🔄 Updated parent repository with new AGP reference');
     }
 
-    logger.clearProgress();
+    logger.success('AGP knowledge pushed successfully!');
   } catch (error) {
-    logger.clearProgress();
     throw new Error(`Failed to push AGP changes: ${error instanceof Error ? error.message : 'Unknown error'}`);
   } finally {
     // Always return to original directory

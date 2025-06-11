@@ -14,14 +14,10 @@ export const connectCommand = new Command('connect')
         throw new Error(`Unsupported tool: ${tool}. Supported tools: ${supportedTools.join(', ')}`);
       }
 
-      logger.info(`Configuring AGP for ${tool}...`);
-
       await connectToAiTool({
         tool: tool.toLowerCase(),
         configPath: options.config,
       });
-
-      logger.success(`AGP configured for ${tool} successfully!`);
     } catch (error) {
       logger.error('Failed to configure AGP:');
       logger.error(error instanceof Error ? error.message : 'Unknown error');

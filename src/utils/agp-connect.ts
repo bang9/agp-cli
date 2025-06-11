@@ -78,8 +78,7 @@ ${agpInstructions}
   // Write updated CLAUDE.md
   await fs.writeFile(claudeMdPath, updatedContent.trim());
 
-  logger.info('Updated CLAUDE.md with complete AGP instructions');
-  logger.success('Claude Code will now follow the full AGP workflow system');
+  logger.success('Claude configured with AGP instructions');
 }
 
 async function setupCursorConfig(configPath: string): Promise<void> {

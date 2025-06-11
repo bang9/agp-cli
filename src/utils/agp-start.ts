@@ -18,7 +18,7 @@ export async function startAgpSession(): Promise<void> {
   const agpPath = path.join(cwd, '.agp');
   const configPath = path.join(agpPath, '.config.json');
 
-  logger.startGroup('Starting AGP Session');
+  logger.info('Starting AGP session...');
 
   // Check if AGP is initialized
   if (!(await fs.pathExists(agpPath))) {
@@ -70,11 +70,11 @@ export async function startAgpSession(): Promise<void> {
   const isNewUser = !(await fs.pathExists(sessionFilePath));
 
   if (isNewUser) {
-    logger.info(`Welcome ${userName}! Creating your first session.`);
     await createNewSessionFile(sessionFilePath, userName);
+    logger.success(`Welcome ${userName}! Session created`);
   } else {
-    logger.info(`Welcome back, ${userName}!`);
     await loadExistingSession(sessionFilePath);
+    logger.success(`Welcome back, ${userName}!`);
   }
 
   // Update config with current user and session
@@ -83,9 +83,11 @@ export async function startAgpSession(): Promise<void> {
 
   await fs.writeFile(configPath, JSON.stringify(config, null, 2));
 
-  logger.endGroup('Session started successfully!');
-  logger.success(`Session file: .agp/sessions/${userName}/index.md`);
-
+  logger.info('');
+  logger.success('Session ready!');
+  logger.info(`File: .agp/sessions/${userName}/index.md`);
+  logger.info('');
+  
   // Show session overview
   await showSessionOverview(sessionFilePath);
 }
@@ -115,14 +117,12 @@ async function createNewSessionFile(sessionFilePath: string, userName: string): 
 `;
 
   await fs.writeFile(sessionFilePath, sessionContent);
-  logger.success('New session file created');
 }
 
 async function loadExistingSession(sessionFilePath: string): Promise<void> {
   // Just validate that the file exists and is readable
   try {
     await fs.readFile(sessionFilePath, 'utf8');
-    logger.success('Previous session loaded');
   } catch (error) {
     throw new Error('Failed to load existing session file');
   }
@@ -142,7 +142,7 @@ async function showSessionOverview(sessionFilePath: string): Promise<void> {
         .filter((task) => task.length > 0);
 
       if (tasks.length > 0) {
-        logger.info('Current Tasks:');
+        logger.info('Tasks:');
         tasks.forEach((task) => {
           logger.step(task);
         });
@@ -159,14 +159,14 @@ async function showSessionOverview(sessionFilePath: string): Promise<void> {
         .filter((file) => file.length > 0);
 
       if (files.length > 0) {
-        logger.info('Active Files:');
+        logger.info('Active:');
         files.forEach((file) => {
           logger.step(file);
         });
       }
     }
 
-    logger.info('You can now start working! AI will automatically track your progress.');
+    logger.info('Ready to work! AI will track your progress.');
   } catch (error) {
     // Don't throw, just skip the overview
     logger.debug('Could not show session overview');

@@ -24,7 +24,7 @@ export async function initializeAgpDirectory(options: AgpInitOptions): Promise<v
   const agpPath = path.join(cwd, '.agp');
   const configPath = path.join(agpPath, '.config.json');
 
-  logger.startGroup('AGP Initialization');
+  logger.info('Initializing AGP system...');
 
   // Check if .agp already exists
   if ((await fs.pathExists(agpPath)) && !options.force) {
@@ -33,9 +33,7 @@ export async function initializeAgpDirectory(options: AgpInitOptions): Promise<v
     const nonHiddenFiles = agpContents.filter((file) => !file.startsWith('.'));
 
     if (nonHiddenFiles.length === 0) {
-      logger.info('Empty .agp directory detected. Pulling submodule content...');
       await pullSubmoduleContent(cwd);
-      logger.success('Submodule content pulled successfully!');
       return;
     } else {
       throw new Error('AGP directory already exists. Use --force to overwrite.');
@@ -52,68 +50,63 @@ export async function initializeAgpDirectory(options: AgpInitOptions): Promise<v
   let existingConfig: AgpConfig | null = null;
   if (options.force && (await fs.pathExists(configPath))) {
     try {
-      logger.progress('Backing up existing config');
       const configContent = await fs.readFile(configPath, 'utf8');
       existingConfig = JSON.parse(configContent);
-      logger.progressDone(`Config backed up: ${existingConfig!.session.user}`);
     } catch (error) {
-      logger.progressDone();
-      logger.warning('Cannot read existing config file. Creating new one.');
+      // Cannot read existing config, will create new one
     }
   }
 
   // Detect project type
-  logger.progress('Analyzing project structure');
   const projectInfo = await detectProjectType(cwd);
-  logger.progressDone(`Detected project type: ${projectInfo.type}`);
+  logger.success(`Project analyzed (${projectInfo.type})`);  
 
   // Remove existing .agp if force is enabled
   if (await fs.pathExists(agpPath)) {
-    logger.progress('Removing existing .agp directory');
     await fs.remove(agpPath);
-    logger.progressDone('Existing .agp directory removed');
   }
 
   // Download template
   const templateUrl = options.templateUrl || DEFAULT_TEMPLATE_URL;
-  await logger.withSpinner('Downloading template', async () => {
-    await downloadTemplate(templateUrl, agpPath);
-  });
+  await downloadTemplate(templateUrl, agpPath);
+  logger.success('Template downloaded');
 
   // Ensure project directory exists
   const projectPath = path.join(agpPath, 'project');
   await fs.ensureDir(projectPath);
 
   // Analyze project and generate documentation
-  await logger.withSpinner('Analyzing project and generating documentation', async () => {
-    await analyzeProject(cwd, projectInfo);
-  });
+  await analyzeProject(cwd, projectInfo);
+  logger.success('Documentation generated');
 
   // Create additional required directories and files
-  logger.progress('Creating additional structure');
   await setupAdditionalStructure(agpPath);
-  logger.progressDone('Additional structure created');
 
   // Initialize as git submodule
-  logger.step('Setting up Git submodule');
   const submoduleUrl = await initializeSubmodule(
     agpPath,
     existingConfig?.submodule?.repository || undefined,
     templateUrl,
   );
+  logger.success('Git submodule configured');
 
   // Create or restore config file
-  logger.progress('Creating config file');
   await createConfigFile(agpPath, existingConfig, submoduleUrl);
-  logger.progressDone('Config file created');
 
   // Validation step
-  await logger.withSpinner('Validating AGP setup', async () => {
-    await validateAgpSetup(agpPath);
-  });
+  await validateAgpSetup(agpPath);
+  logger.success('Setup validated');
 
-  logger.endGroup('AGP system ready!');
+  logger.info('');
+  logger.success('AGP system ready!');
+  logger.info('');
+  logger.info('Next steps:');
+  logger.step('agp start     - Start or resume your session');
+  logger.step('agp connect   - Connect with AI assistants like Claude');
+  logger.step('agp push      - Save and share your knowledge');
+  
   if (existingConfig) {
+    logger.info('');
     logger.success(`User settings restored: ${existingConfig.session.user}`);
   }
 }
@@ -224,7 +217,6 @@ async function initializeSubmodule(agpPath: string, existingUrl?: string, templa
         } else if (action.action === 'overwrite') {
           // Force push to overwrite existing content
           process.chdir(agpPath);
-          logger.progress('Overwriting existing repository content');
 
           // First try to pull and merge if possible
           try {
@@ -234,19 +226,13 @@ async function initializeSubmodule(agpPath: string, existingUrl?: string, templa
             // If pull fails, do a force push
             execSync('git push --force origin main', { stdio: 'pipe' });
           }
-
-          logger.progressDone('Repository content overwritten');
         } else if (action.action === 'merge') {
           // Clone existing repository first, then merge template
           await fs.remove(agpPath); // Remove current .agp
-          logger.progress('Cloning existing repository');
           execSync(`git submodule add ${repositoryUrl} .agp`, { cwd, stdio: 'pipe' });
-          logger.progressDone('Existing repository cloned');
 
           // Merge template content with existing
-          logger.progress('Merging template with existing content');
           await mergeTemplateWithExisting(agpPath, templateUrl!);
-          logger.progressDone('Template merged with existing content');
 
           // Commit merged changes
           process.chdir(agpPath);
@@ -260,7 +246,6 @@ async function initializeSubmodule(agpPath: string, existingUrl?: string, templa
         }
 
         process.chdir(cwd); // Return to original directory
-        logger.progressDone('Remote repository connected');
       }
 
       // Return to parent directory
@@ -274,11 +259,8 @@ async function initializeSubmodule(agpPath: string, existingUrl?: string, templa
       }
 
       // Add .agp as a submodule
-      logger.progress('Adding as Git submodule');
       execSync(`git submodule add ${repositoryUrl} .agp`, { stdio: 'pipe' });
-      logger.progressDone('Git submodule added');
 
-      logger.success('Git submodule initialized successfully!');
       success = true;
       return repositoryUrl;
     } catch (error) {
@@ -406,8 +388,7 @@ async function validateAgpSetup(agpPath: string): Promise<void> {
       throw new Error('Git submodule not properly initialized');
     }
 
-    logger.debug('All required files and directories present');
-    logger.debug('Git submodule properly configured');
+    // Validation passed
   } catch (error) {
     throw new Error('Git submodule validation failed');
   }
@@ -454,17 +435,13 @@ async function pullSubmoduleContent(cwd: string): Promise<void> {
 
   try {
     // Initialize and update submodules
-    logger.progress('Initializing submodule');
     execSync('git submodule init', { cwd, stdio: 'pipe' });
-    logger.progressDone('Submodule initialized');
-
-    logger.progress('Pulling submodule content');
     execSync('git submodule update --remote', { cwd, stdio: 'pipe' });
-    logger.progressDone('Submodule content pulled');
 
     // Validate the setup
     const agpPath = path.join(cwd, '.agp');
     await validateAgpSetup(agpPath);
+    logger.success('Submodule content pulled successfully!');
   } catch (error) {
     throw new Error(`Failed to pull submodule content: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }

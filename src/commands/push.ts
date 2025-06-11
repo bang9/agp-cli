@@ -9,14 +9,9 @@ export const pushCommand = new Command('push')
     const logger = new Logger();
 
     try {
-      logger.info('🚀 Pushing AGP knowledge changes...');
-
       await pushAgpChanges({
         message: options.message,
       });
-
-      logger.success('✅ AGP knowledge pushed successfully!');
-      logger.info('💡 Your AI session progress is now saved and shared');
     } catch (error) {
       logger.error('❌ Failed to push AGP changes:');
       logger.error(error instanceof Error ? error.message : 'Unknown error');
