@@ -7,7 +7,9 @@ export function createStartCommand(): Command {
 
   command.description('Start or resume AGP session').action(async () => {
     try {
-      await startAgpSession();
+      await logger.withSpinner('Starting session', async () => {
+        await startAgpSession();
+      });
     } catch (error) {
       logger.error(`Failed to start AGP session: ${error instanceof Error ? error.message : String(error)}`);
       process.exit(1);

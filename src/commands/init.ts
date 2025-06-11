@@ -8,9 +8,11 @@ export const initCommand = new Command('init')
   .option('--template <url>', 'Use custom template repository URL')
   .action(async (options) => {
     try {
-      await initializeAgpDirectory({
-        force: options.force || false,
-        templateUrl: options.template,
+      await logger.withSpinner('Initializing AGP system', async () => {
+        await initializeAgpDirectory({
+          force: options.force || false,
+          templateUrl: options.template,
+        });
       });
     } catch (error) {
       logger.error('Failed to initialize AGP system:');

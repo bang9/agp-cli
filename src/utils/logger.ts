@@ -127,21 +127,21 @@ class Logger {
     this.clearProgress();
 
     // Initial display
-    process.stdout.write(`${chalk.gray(spinnerChars[0])} ${chalk.gray(message)}...`);
+    process.stdout.write(`${chalk.cyan(spinnerChars[0])} ${message}...`);
     
     const spinnerInterval = setInterval(() => {
       spinnerIndex = (spinnerIndex + 1) % spinnerChars.length;
-      process.stdout.write(`\r${chalk.gray(spinnerChars[spinnerIndex])} ${chalk.gray(message)}...`);
-    }, 100);
+      process.stdout.write(`\r${chalk.cyan(spinnerChars[spinnerIndex])} ${message}...`);
+    }, 120);
 
     try {
       const result = await operation();
       clearInterval(spinnerInterval);
-      process.stdout.write(`\r${chalk.gray('✓')} ${chalk.gray(message)}\n`);
+      process.stdout.write(`\r${chalk.green('✓')} ${message}\n`);
       return result;
     } catch (error) {
       clearInterval(spinnerInterval);
-      process.stdout.write(`\r${chalk.red('✗')} ${chalk.gray(message)}\n`);
+      process.stdout.write(`\r${chalk.red('✗')} ${message}\n`);
       throw error;
     }
   }

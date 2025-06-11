@@ -32,24 +32,22 @@ export async function pushAgpChanges(options: AgpPushOptions): Promise<void> {
 
     const changedFiles = status.trim().split('\n');
 
-    await logger.withSpinner(`Pushing ${changedFiles.length} AGP files`, async () => {
-      // Generate commit message if not provided
-      const commitMessage = options.message || generateCommitMessage(changedFiles);
+    // Generate commit message if not provided
+    const commitMessage = options.message || generateCommitMessage(changedFiles);
 
-      execSync('git add .', { stdio: 'pipe' });
-      execSync(`git commit -m "${commitMessage}"`, { stdio: 'pipe' });
-      execSync('git push', { stdio: 'pipe' });
+    execSync('git add .', { stdio: 'pipe' });
+    execSync(`git commit -m "${commitMessage}"`, { stdio: 'pipe' });
+    execSync('git push', { stdio: 'pipe' });
 
-      // Update submodule reference in parent repository
-      process.chdir(cwd);
-      execSync('git add .agp', { stdio: 'pipe' });
+    // Update submodule reference in parent repository
+    process.chdir(cwd);
+    execSync('git add .agp', { stdio: 'pipe' });
 
-      // Check if parent has changes to commit
-      const parentStatus = execSync('git status --porcelain', { encoding: 'utf8' });
-      if (parentStatus.includes('.agp')) {
-        execSync(`git commit -m "chore: update AGP submodule pointer"`, { stdio: 'pipe' });
-      }
-    });
+    // Check if parent has changes to commit
+    const parentStatus = execSync('git status --porcelain', { encoding: 'utf8' });
+    if (parentStatus.includes('.agp')) {
+      execSync(`git commit -m "chore: update AGP submodule pointer"`, { stdio: 'pipe' });
+    }
   } catch (error) {
     throw new Error(`Failed to push AGP changes: ${error instanceof Error ? error.message : 'Unknown error'}`);
   } finally {

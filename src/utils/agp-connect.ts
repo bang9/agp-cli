@@ -1,7 +1,6 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { AgpConnectOptions } from '../types';
-import { logger } from './logger';
 
 export async function connectToAiTool(options: AgpConnectOptions): Promise<void> {
   const cwd = process.cwd();
@@ -78,7 +77,7 @@ ${agpInstructions}
   // Write updated CLAUDE.md
   await fs.writeFile(claudeMdPath, updatedContent.trim());
 
-  logger.success('Claude configured with AGP instructions');
+  // Success handled by spinner
 }
 
 async function setupCursorConfig(configPath: string): Promise<void> {

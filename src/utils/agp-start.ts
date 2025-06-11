@@ -1,6 +1,5 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import { logger } from './logger';
 
 interface AgpConfig {
   session: {
@@ -18,7 +17,6 @@ export async function startAgpSession(): Promise<void> {
   const agpPath = path.join(cwd, '.agp');
   const configPath = path.join(agpPath, '.config.json');
 
-  logger.info('Starting AGP session...');
 
   // Check if AGP is initialized
   if (!(await fs.pathExists(agpPath))) {
@@ -71,10 +69,8 @@ export async function startAgpSession(): Promise<void> {
 
   if (isNewUser) {
     await createNewSessionFile(sessionFilePath, userName);
-    logger.success(`Welcome ${userName}! Session created`);
   } else {
     await loadExistingSession(sessionFilePath);
-    logger.success(`Welcome back, ${userName}!`);
   }
 
   // Update config with current user and session
@@ -83,13 +79,7 @@ export async function startAgpSession(): Promise<void> {
 
   await fs.writeFile(configPath, JSON.stringify(config, null, 2));
 
-  logger.info('');
-  logger.success('Session ready!');
-  logger.info(`File: .agp/sessions/${userName}/index.md`);
-  logger.info('');
-  
-  // Show session overview
-  await showSessionOverview(sessionFilePath);
+  // Success handled by spinner
 }
 
 async function createNewSessionFile(sessionFilePath: string, userName: string): Promise<void> {
@@ -128,47 +118,3 @@ async function loadExistingSession(sessionFilePath: string): Promise<void> {
   }
 }
 
-async function showSessionOverview(sessionFilePath: string): Promise<void> {
-  try {
-    const sessionContent = await fs.readFile(sessionFilePath, 'utf8');
-
-    // Extract in-progress tasks
-    const inProgressMatch = sessionContent.match(/## In Progress\n([\s\S]*?)(?=\n## |$)/);
-    if (inProgressMatch && inProgressMatch[1]) {
-      const tasks = inProgressMatch[1]
-        .split('\n')
-        .filter((line) => line.trim().startsWith('- [ ]'))
-        .map((task) => task.replace('- [ ]', '').trim())
-        .filter((task) => task.length > 0);
-
-      if (tasks.length > 0) {
-        logger.info('Tasks:');
-        tasks.forEach((task) => {
-          logger.step(task);
-        });
-      }
-    }
-
-    // Extract active files
-    const activeFilesMatch = sessionContent.match(/## Active Files\n([\s\S]*?)(?=\n## |$)/);
-    if (activeFilesMatch && activeFilesMatch[1]) {
-      const files = activeFilesMatch[1]
-        .split('\n')
-        .filter((line) => line.trim().startsWith('- ') && !line.includes('(No active files'))
-        .map((line) => line.replace(/^- /, '').trim())
-        .filter((file) => file.length > 0);
-
-      if (files.length > 0) {
-        logger.info('Active:');
-        files.forEach((file) => {
-          logger.step(file);
-        });
-      }
-    }
-
-    logger.info('Ready to work! AI will track your progress.');
-  } catch (error) {
-    // Don't throw, just skip the overview
-    logger.debug('Could not show session overview');
-  }
-}

@@ -24,7 +24,6 @@ export async function initializeAgpDirectory(options: AgpInitOptions): Promise<v
   const agpPath = path.join(cwd, '.agp');
   const configPath = path.join(agpPath, '.config.json');
 
-  logger.info('Initializing AGP system...');
 
   // Check if .agp already exists
   if ((await fs.pathExists(agpPath)) && !options.force) {
@@ -57,63 +56,44 @@ export async function initializeAgpDirectory(options: AgpInitOptions): Promise<v
     }
   }
 
-  // Setup AGP structure
+  // Setup AGP structure silently
   const templateUrl = options.templateUrl || DEFAULT_TEMPLATE_URL;
-  const projectInfo = await logger.withSpinner('Setting up AGP structure', async () => {
-    // Detect project type
-    const detectedProjectInfo = await detectProjectType(cwd);
-    
-    // Remove existing .agp if force is enabled
-    if (await fs.pathExists(agpPath)) {
-      await fs.remove(agpPath);
-    }
-    
-    // Download template
-    await downloadTemplate(templateUrl, agpPath);
-    
-    // Ensure project directory exists
-    const projectPath = path.join(agpPath, 'project');
-    await fs.ensureDir(projectPath);
-    
-    // Analyze project and generate documentation
-    await analyzeProject(cwd, detectedProjectInfo);
-    
-    return detectedProjectInfo;
-  });
+  const detectedProjectInfo = await detectProjectType(cwd);
+  
+  // Remove existing .agp if force is enabled
+  if (await fs.pathExists(agpPath)) {
+    await fs.remove(agpPath);
+  }
+  
+  // Download template
+  await downloadTemplate(templateUrl, agpPath);
+  
+  // Ensure project directory exists
+  const projectPath = path.join(agpPath, 'project');
+  await fs.ensureDir(projectPath);
+  
+  // Analyze project and generate documentation
+  await analyzeProject(cwd, detectedProjectInfo);
+  
+  // projectInfo used for future reference
 
   // Create additional required directories and files
   await setupAdditionalStructure(agpPath);
 
-  // Initialize git submodule (this has its own user interaction)
+  // Initialize git submodule (this has its own user interaction but should be silent too)
   const submoduleUrl = await initializeSubmodule(
     agpPath,
     existingConfig?.submodule?.repository || undefined,
     templateUrl,
   );
-  
-  // Use projectInfo for logging
-  logger.debug(`Project type: ${projectInfo.type}`);
 
-  // Finalize setup
-  await logger.withSpinner('Finalizing setup', async () => {
-    // Create or restore config file
-    await createConfigFile(agpPath, existingConfig, submoduleUrl);
-    
-    // Validation step
-    await validateAgpSetup(agpPath);
-  });
-
-  logger.success('AGP system ready!');
-  logger.info('');
-  logger.info('Next steps:');
-  logger.step('agp start     - Start or resume your session');
-  logger.step('agp connect   - Connect with AI assistants like Claude');
-  logger.step('agp push      - Save and share your knowledge');
+  // Create or restore config file
+  await createConfigFile(agpPath, existingConfig, submoduleUrl);
   
-  if (existingConfig) {
-    logger.info('');
-    logger.success(`User settings restored: ${existingConfig.session.user}`);
-  }
+  // Validation step
+  await validateAgpSetup(agpPath);
+
+  // No output needed - spinner will show completion
 }
 
 async function initializeSubmodule(agpPath: string, existingUrl?: string, templateUrl?: string): Promise<string> {
