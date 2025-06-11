@@ -21,7 +21,8 @@
       "Bash(npm whoami:*)",
       "Bash(./dist/cli.js --help)",
       "Bash(git init:*)",
-      "Bash(npm publish:*)"
+      "Bash(npm publish:*)",
+      "Bash(git reset:*)"
     ],
     "deny": []
   }

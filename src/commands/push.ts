@@ -8,10 +8,8 @@ export const pushCommand = new Command('push')
   .action(async (options) => {
 
     try {
-      await logger.withSpinner('Pushing changes', async () => {
-        await pushAgpChanges({
-          message: options.message,
-        });
+      await pushAgpChanges({
+        message: options.message,
       });
     } catch (error) {
       logger.error('Failed to push AGP changes:');
