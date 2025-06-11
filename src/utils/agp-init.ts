@@ -97,7 +97,6 @@ export async function initializeAgpDirectory(options: AgpInitOptions): Promise<v
   await validateAgpSetup(agpPath);
   logger.success('Setup validated');
 
-  logger.info('');
   logger.success('AGP system ready!');
   logger.info('');
   logger.info('Next steps:');

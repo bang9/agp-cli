@@ -19,22 +19,22 @@ class Logger {
    */
   info(message: string): void {
     this.clearProgress();
-    console.log(chalk.blue(`ℹ️  ${message}`));
+    console.log(chalk.blue(message));
   }
 
   success(message: string): void {
     this.clearProgress();
-    console.log(chalk.green(`✅ ${message}`));
+    console.log(chalk.green(`✓ ${message}`));
   }
 
   warning(message: string): void {
     this.clearProgress();
-    console.log(chalk.yellow(`⚠️  ${message}`));
+    console.log(chalk.yellow(`! ${message}`));
   }
 
   error(message: string): void {
     this.clearProgress();
-    console.log(chalk.red(`❌ ${message}`));
+    console.log(chalk.red(`✗ ${message}`));
   }
 
   /**
@@ -44,7 +44,7 @@ class Logger {
     if (this.options.silent) return;
 
     this.clearProgress();
-    this.currentProgress = `🔄 ${message}...`;
+    this.currentProgress = `⠋ ${message}...`;
     process.stdout.write(chalk.gray(this.currentProgress));
     this.isProgressActive = true;
   }
@@ -69,7 +69,7 @@ class Logger {
     if (!this.options.verbose || this.options.silent) return;
 
     this.clearProgress();
-    console.log(chalk.dim(`🔍 ${message}`));
+    console.log(chalk.dim(message));
   }
 
   /**
@@ -77,7 +77,7 @@ class Logger {
    */
   step(message: string): void {
     this.clearProgress();
-    console.log(chalk.cyan(`📋 ${message}`));
+    console.log(chalk.cyan(`→ ${message}`));
   }
 
   /**
@@ -98,7 +98,7 @@ class Logger {
    */
   startGroup(title: string): void {
     this.clearProgress();
-    console.log(chalk.bold.blue(`\n🚀 ${title}`));
+    console.log(chalk.bold.blue(`\n${title}`));
   }
 
   /**
@@ -107,7 +107,7 @@ class Logger {
   endGroup(message?: string): void {
     this.clearProgress();
     if (message) {
-      console.log(chalk.bold.green(`🎉 ${message}\n`));
+      console.log(chalk.bold.green(`${message}\n`));
     } else {
       console.log('');
     }

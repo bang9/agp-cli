@@ -1,7 +1,6 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { ProjectInfo } from '../types';
-import { Logger } from './logger';
 
 interface SourceFile {
   path: string;
@@ -12,30 +11,23 @@ interface SourceFile {
 
 export async function analyzeProject(projectPath: string, projectInfo: ProjectInfo): Promise<void> {
   const agpPath = path.join(projectPath, '.agp');
-  const logger = new Logger();
-
-  logger.info('🔍 Analyzing source files...');
 
   // Find all source files
   const sourceFiles = await findSourceFiles(projectPath);
-  logger.info(`📄 Found ${sourceFiles.length} source files`);
 
   // Generate architecture documentation
-  await generateArchitectureFiles(agpPath, projectInfo, sourceFiles, logger);
+  await generateArchitectureFiles(agpPath, projectInfo, sourceFiles);
 
   // Generate pattern documentation
-  await generatePatternFiles(agpPath, projectInfo, sourceFiles, logger);
+  await generatePatternFiles(agpPath, projectInfo, sourceFiles);
 
   // Generate initial knowledge files for existing source files
-  logger.info('📝 Generating initial knowledge files...');
   for (const file of sourceFiles.slice(0, 10)) {
     // Limit to first 10 files for demo
     await generateSourceFileKnowledge(agpPath, file);
   }
 
-  if (sourceFiles.length > 10) {
-    logger.info(`   ... and ${sourceFiles.length - 10} more files (knowledge files can be generated as needed)`);
-  }
+  // Additional files can be processed as needed
 }
 
 async function findSourceFiles(projectPath: string): Promise<SourceFile[]> {
@@ -288,7 +280,6 @@ async function generateArchitectureFiles(
   agpPath: string,
   projectInfo: ProjectInfo,
   sourceFiles: SourceFile[],
-  logger: Logger,
 ): Promise<void> {
   const architecturePath = path.join(agpPath, 'architecture');
 
@@ -302,14 +293,13 @@ async function generateArchitectureFiles(
   const projectOverviewContent = generateProjectOverviewContent(projectInfo, sourceFiles);
   await fs.writeFile(path.join(architecturePath, 'project-overview.md'), projectOverviewContent);
 
-  logger.info('  📋 Architecture documentation generated');
+  // Architecture documentation completed
 }
 
 async function generatePatternFiles(
   agpPath: string,
   projectInfo: ProjectInfo,
   sourceFiles: SourceFile[],
-  logger: Logger,
 ): Promise<void> {
   const patternsPath = path.join(agpPath, 'patterns');
 
@@ -327,7 +317,7 @@ async function generatePatternFiles(
     await fs.writeFile(path.join(patternsPath, 'testing-patterns.md'), testPatternContent);
   }
 
-  logger.info('  🎨 Pattern documentation generated');
+  // Pattern documentation completed
 }
 
 function extractFeatureDomains(sourceFiles: SourceFile[]): Record<string, string[]> {
